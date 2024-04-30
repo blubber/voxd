@@ -1,0 +1,9 @@
+Target dependency graph (4 targets)
+Target 'voxd' in project 'voxd'
+➜ Explicit dependency on target 'FlyingFox' in project 'FlyingFox'
+Target 'FlyingFox' in project 'FlyingFox'
+➜ Explicit dependency on target 'FlyingFox' in project 'FlyingFox'
+➜ Explicit dependency on target 'FlyingSocks' in project 'FlyingFox'
+Target 'FlyingFox' in project 'FlyingFox'
+➜ Explicit dependency on target 'FlyingSocks' in project 'FlyingFox'
+Target 'FlyingSocks' in project 'FlyingFox' (no dependencies)

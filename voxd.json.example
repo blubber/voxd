@@ -1,0 +1,7 @@
+{
+	"port": "1729",
+	"voices": {
+		"voice1": { "rate": 1.0, "pitch": 1.0, "volume": 1.0, "voice": "Samantha" },
+		"voice2": { "rate": 1.2, "pitch": 1.0, "volume": 1.0, "voice": "Samantha" }
+	}
+}

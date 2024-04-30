@@ -1,0 +1,15 @@
+{
+  "" : {
+    "const-values" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/voxd-master.swiftconstvalues",
+    "dependencies" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/voxd-master.d",
+    "diagnostics" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/voxd-master.dia",
+    "emit-module-dependencies" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/voxd-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/voxd-master-emit-module.dia",
+    "swift-dependencies" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/voxd-master.swiftdeps"
+  },
+  "/Users/tiemo/src/voxd/voxd/main.swift" : {
+    "index-unit-output-path" : "/voxd.build/Release/voxd.build/Objects-normal/x86_64/main.o",
+    "llvm-bc" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/main.bc",
+    "object" : "/Users/tiemo/src/voxd/build/voxd.build/Release/voxd.build/Objects-normal/x86_64/main.o"
+  }
+}

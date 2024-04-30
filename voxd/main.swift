@@ -2,7 +2,7 @@ import Foundation
 import AVFoundation
 import FlyingFox
 
-struct ChannelSettings: Decodable {
+struct VoiceSettings: Decodable {
     var pitch: Float = 1.0
     var rate: Float = 1.0
     var volume: Float = 1.0
@@ -25,86 +25,76 @@ struct ChannelSettings: Decodable {
 
 struct Settings: Decodable {
     var port: UInt16 = 1729
-    var channels = [ChannelSettings()]
+    let voices: [String: VoiceSettings]
     
 
     private enum CodingKeys: String, CodingKey {
-        case port, channels
+        case port, voices
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         port = (try? container.decode(UInt16.self, forKey: .port)) ?? 1729
-        if let channels = try? container.decodeIfPresent([ChannelSettings].self, forKey: .channels) {
-            self.channels = channels
-        }
+        voices = (try? container.decodeIfPresent([String: VoiceSettings].self, forKey: .voices)) ?? [:]
     }
 }
 
 struct Utterance: Decodable {
-    let channel: Int
+    let voice: String
     let text: String
 }
 
 
-struct Channel {
+struct Voice {
     let pitch: Float
     let rate: Float
     let volume: Float
-    let voice: AVSpeechSynthesisVoice
-    let synth: AVSpeechSynthesizer
+    let voice: AVSpeechSynthesisVoice?
 }
 
 
 class SpeechManager: NSObject {
-    private let channels: [Channel]
-    private var queue = [(AVSpeechSynthesizer, AVSpeechUtterance)]()
+    private let voices: [String: Voice]
+    private var queue = [AVSpeechUtterance]()
+    private let synth = AVSpeechSynthesizer()
     
-    init(channels: [Channel]) {
-        self.channels = channels
-        
+    
+    init(voices: [String: Voice]) {
+        self.voices = voices
         super.init()
-        
-        for channel in channels {
-            channel.synth.delegate = self
-        }
+        synth.delegate = self
     }
     
     func stopSpeaking() {
-        self.queue = []
-        for channel in channels {
-            if channel.synth.isSpeaking {
-                channel.synth.stopSpeaking(at: .immediate)
-            }
+        queue.removeAll()
+        if synth.isSpeaking {
+            synth.stopSpeaking(at: .immediate)
         }
     }
     
     func schedule(_ utterances: [Utterance]) {
         stopSpeaking()
         
-        let queue: [(AVSpeechSynthesizer, AVSpeechUtterance)] = utterances.compactMap { utterance in
-            if utterance.channel < 0 || utterance.channel >= channels.count {
-                return nil
+        queue = utterances.compactMap { utterance in
+            var voice: Voice = voices["__default"]!
+            if let selectedVoice = voices[utterance.voice] {
+                voice = selectedVoice
             }
             
-            let channel = channels[utterance.channel]
             let avSpeechUtterance = AVSpeechUtterance(string: utterance.text)
+            avSpeechUtterance.pitchMultiplier = voice.pitch
+            avSpeechUtterance.rate = voice.rate / 2
+            avSpeechUtterance.volume = voice.volume
+            avSpeechUtterance.voice = voice.voice
             
-            avSpeechUtterance.pitchMultiplier = channel.pitch
-            avSpeechUtterance.rate = channel.rate / 2
-            avSpeechUtterance.volume = channel.volume
-            avSpeechUtterance.voice = channel.voice
-            
-            return (channel.synth, avSpeechUtterance)
+            return avSpeechUtterance
         }
-        
-        self.queue = queue.reversed()
         
         scheduleNext()
     }
     
     func scheduleNext() {
-        if let (synth, utterance) = queue.last {
+        if let utterance = queue.last {
             synth.speak(utterance)
         }
     }
@@ -112,15 +102,12 @@ class SpeechManager: NSObject {
 
 extension SpeechManager: AVSpeechSynthesizerDelegate {
     func speechSynthesizer(_ synth: AVSpeechSynthesizer, didFinish: AVSpeechUtterance) {
-        if let (_, last) = queue.last {
+        if let last = queue.last {
             if last === didFinish {
                 queue.removeLast()
                 scheduleNext()
             }
         }
-    }
-    func speechSynthesizer(_ synth: AVSpeechSynthesizer, didCancel: AVSpeechUtterance) {
-        print("CANCEL \(didCancel.speechString)")
     }
 
 }
@@ -153,30 +140,33 @@ func listVoices(_ languages: [String]) {
 }
 
 
-func resolve_voice(_ voiceName: String) -> AVSpeechSynthesisVoice {
+func resolveVoice(_ voiceName: String) -> AVSpeechSynthesisVoice? {
     let voiceName = voiceName.lowercased()
     for voice in AVSpeechSynthesisVoice.speechVoices() {
         if voice.name.lowercased() == voiceName {
             return voice
         }
     }
-    fatalError("Unknown voice: \(voiceName)")
+    
+    return nil
 }
 
 func serve(_ settings: Settings) async {
-    let channels = settings.channels.map {
-        let voice = resolve_voice($0.voice)
-        return Channel(
-            pitch: $0.pitch,
-            rate: $0.rate,
-            volume: $0.volume,
-            voice: voice,
-            synth: AVSpeechSynthesizer()
+    var voices = [String: Voice]()
+    for (voiceId, voiceSettings) in settings.voices {
+        let avSpeechVoice = resolveVoice(voiceSettings.voice)
+        
+        voices[voiceId] = Voice(
+            pitch: voiceSettings.pitch,
+            rate: voiceSettings.rate,
+            volume: voiceSettings.volume,
+            voice: avSpeechVoice
         )
     }
-    let speechManager = SpeechManager(channels: channels)
+    voices["__default"] = Voice(pitch: 1.0, rate: 1.0, volume: 1.0, voice: nil)
+    
+    let speechManager = SpeechManager(voices: voices)
     let jsonDecoder = JSONDecoder()
-    print("Have \(channels.count) channels")
     
     let server = try! HTTPServer(address: .inet(ip4: "127.0.0.1", port: settings.port))
     

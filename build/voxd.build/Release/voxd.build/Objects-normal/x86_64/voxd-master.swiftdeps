@@ -1,0 +1,6 @@
+version: "Apple Swift version 5.10 (swiftlang-5.10.0.13 clang-1500.3.9.4)"
+options: "217a4ade6c8212ae808c1e4dbe57fd3f5194dc2c40f7e54bda399887689c7e3b"
+build_start_time: [1714457159, 32987000]
+build_end_time: [1714457161, 766886000]
+inputs:
+  "/Users/tiemo/src/voxd/voxd/main.swift": !dirty [1714413532, 285026956]
