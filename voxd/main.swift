@@ -88,7 +88,7 @@ class SpeechManager: NSObject {
             avSpeechUtterance.voice = voice.voice
             
             return avSpeechUtterance
-        }
+        }.reversed()
         
         scheduleNext()
     }
